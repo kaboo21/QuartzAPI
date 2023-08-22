@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using QuartzAPI.Models;
 using QuartzAPI.Services;
 
 namespace QuartzAPI.Controllers
@@ -10,26 +11,43 @@ namespace QuartzAPI.Controllers
     [ApiController]
     public class ScheduleController : ControllerBase
     {
-        private readonly IScheduleService _scheduler;
+        private readonly IScheduleService _scheduleService;
 
         public ScheduleController(IScheduleService scheduler)
         {
-            _scheduler = scheduler;
+            _scheduleService = scheduler;
         }
         [HttpGet]
         [Route("trigger-job")]
-        public IActionResult TriggerJob(string cronStr) 
+        public async Task<IActionResult> TriggerJob(string cronStr) 
         {
-            _scheduler.ScheduleNotificationJob(cronStr);
+            await _scheduleService.ScheduleNotificationJob(cronStr);
 
             return Ok();
         }
 
         [HttpGet]
         [Route("stop-job")]
-        public IActionResult StopJob()
+        public async Task<IActionResult> StopJob()
         {
-            _scheduler.StopNotificationJob();
+            await _scheduleService.StopNotificationJob();
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("cron-model")]
+        public async Task<IActionResult> ScheduleJobByCronModel(CronModel cronModel)
+        {
+            if(cronModel.IsScheduled)
+            {
+                await _scheduleService.ScheduleNotificationJob(cronModel.ToString());
+            }
+            else
+            {
+                await _scheduleService.StopNotificationJob();
+            }
+
+            Console.WriteLine($"RescheduleJobCronModel - {cronModel}");
             return Ok();
         }
     }
